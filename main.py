@@ -8,14 +8,20 @@ from contextlib import asynccontextmanager
 from services.shop_service import get_items
 
 # Routers
-from routers import users, courses, appeals, shop, auth
+from routers import users, courses, appeals, shop, auth, board
 
 # [NEW] 서버 시작 시 미리 데이터 로딩 (Warm-up)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # 게시판 테이블 자동 생성
+    from board_database import engine as board_engine
+    from board_models import Base as BoardBase
+    BoardBase.metadata.create_all(bind=board_engine)
+    print("📋 Board Tables Ready!")
+
     print("🔥 Warming up Shop Cache...")
     try:
-        get_items() # 서버 시작 시 아이템 목록 미리 로딩
+        get_items()
         print("✅ Shop Cache Ready!")
     except Exception as e:
         print(f"⚠️ Cache Warmup Failed: {e}")
@@ -108,3 +114,4 @@ app.include_router(courses.router)
 app.include_router(appeals.router)
 app.include_router(shop.router)
 app.include_router(auth.router)
+app.include_router(board.router)
